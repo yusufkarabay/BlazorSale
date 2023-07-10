@@ -1,0 +1,105 @@
+﻿@page "/"
+@using Business.Interfaces;
+@using Entities.Entities;
+@inject ICategoryService categoryService
+
+@if (categories == null)
+{
+    <RadzenProgressBar ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+}
+else
+{
+    <RadzenDataGrid @ref="categoriesGrid" AllowAlternatingRows="false" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true" EditMode="DataGridEditMode.Single"
+                    Data="@categories" TItem="Category" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" Sort="@Reset" Page="@Reset" Filter="@Reset" ColumnWidth="200px">
+        <Columns>
+            <RadzenDataGridColumn TItem="Category" Property="CategoryID" Title="Category ID" Width="120px" />
+
+            <RadzenDataGridColumn TItem="Category" Property="ShipName" Title="Category Name">
+                <EditTemplate Context="context">
+                    <RadzenTextBox @bind-Value="context.Name" Style="width:100%; display: block" Name="Name" />
+                    <RadzenRequiredValidator Text="Categor is required" Component="ShipName" Popup="true" />
+                </EditTemplate>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="Category" Context="Category" Filterable="false" Sortable="false" TextAlign="TextAlign.Right" Width="156px">
+                <Template Context="Category">
+                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@(args => EditRow(Category))" @onclick:stopPropagation="true">
+                    </RadzenButton>
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(Category))" @onclick:stopPropagation="true">
+                    </RadzenButton>
+                </Template>
+                <EditTemplate Context="Category">
+                    <RadzenButton Icon="check" ButtonStyle="ButtonStyle.Success" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="@((args) => SaveRow(Category))">
+                    </RadzenButton>
+                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@((args) => CancelEdit(Category))">
+                    </RadzenButton>
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Icon="delete" Variant="Variant.Flat" Shade="Shade.Lighter" Size="ButtonSize.Medium" class="my-1 ms-1" Click="@(args => DeleteRow(Category))">
+                    </RadzenButton>
+                </EditTemplate>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+
+}
+<RadzenButton ButtonStyle="ButtonStyle.Success" Icon="add_circle_outline" class="mt-2 mb-4" Text="Add New Category" Click="@InsertRow" Disabled=@(categoryToInsert != null || categoryToUpdate != null) />
+
+@code {
+    RadzenDataGrid<Category>? categoriesGrid;
+    IList<Category>? categories;
+
+    Category categoryToInsert;
+    Category categoryToUpdate;
+
+    void Reset()
+    {
+        categoryToInsert = null;
+        categoryToUpdate = null;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        categories= await categoryService.GetAll();
+    }
+
+    async Task EditRow(Category category)
+    {
+        categoryToUpdate = category;
+        await categoriesGrid.EditRow(category);
+    }
+
+    void OnUpdateRow(Category category)
+    {
+
+    }
+
+    async Task SaveRow(Category category)
+    {
+        await categoriesGrid.UpdateRow(category);
+    }
+
+    void CancelEdit(Category category)
+    {
+
+        categoriesGrid.CancelEditRow(category);
+
+
+    }
+
+    async Task DeleteRow(Category category)
+    {
+
+    }
+
+    async Task InsertRow()
+    {
+        categoryToInsert = new Category();
+        await categoriesGrid.InsertRow(categoryToInsert);
+    }
+
+    async void OnCreateRow(Category category)
+    {
+        var add = categoryService.Add(category);
+        categories= await categoryService.GetAll();
+        // await categoriesGrid.Reload();
+    }
+}
+
